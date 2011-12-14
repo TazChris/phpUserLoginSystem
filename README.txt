@@ -1,4 +1,11 @@
 README FILE
+This is based off of a tutorial I found online at 
+http://www.dreamincode.net/forums/topic/247188-user-authentication-class/
+
+I took the tutorial, made it into a full "app" and this is the end result.
+As I find things to improve, I'll update this repository.
+
+==========================================================================
 
 This is a simple login system using sessions and PHP
 
