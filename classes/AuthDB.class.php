@@ -129,4 +129,34 @@ class AuthDB {
 		
 		return false;
 	}
+	
+	public function checkVerification($email, $code) {
+		$query = "UPDATE " . USER_TABLE . " SET is_verified = 1, is_active = 1 WHERE email = ? and verification_code = ?"; 
+
+		$stmt = $this->_db->prepare($query);
+		
+		$stmt->bind_param("ss", $email, $code);
+		
+		if ($stmt->execute()) {
+			return $stmt->affected_rows;
+		}
+		
+		return 0;
+	}
+	
+	public function retrieveCode($email) {
+		$query = "SELECT verification_code FROM " . USER_TABLE . " WHERE email = ?";
+		
+		$stmt = $this->_db->prepare($query);
+		
+		$stmt->bind_param("s", $email);
+		
+		if ($stmt->execute()) {
+			$stmt->bind_result($code);
+			$stmt->fetch();
+			return $code;
+		}
+		
+		return false;
+	}
 }

@@ -7,7 +7,7 @@ class Auth {
 
 	public function __construct()
 	{
-		$this->siteKey = 'SLLLLSDIE*#&Slks*(Lsdf***,asdf';
+		$this->_siteKey = 'SLLLLSDIE*#&Slks*(Lsdf***,asdf';
 	}
 
 	private function randomString($length = 50)
@@ -57,6 +57,8 @@ class Auth {
 		$this->_db = null;
 
 		if($created != false){
+			//send verification
+			$this->sendVerification($email, $code);
 			return true;
 		}
 			
@@ -129,7 +131,8 @@ class Auth {
 
 	public function checkSession()
 	{
-		if (isset($_SESSION['user_id'])) { //session available, continue
+		if (isset($_SESSION['user_id'])) {
+			//session available, continue
 			//get db routines
 			$db = new AuthDB();
 
@@ -139,7 +142,7 @@ class Auth {
 			//close db
 			$db = null;
 			unset($db);
-			
+				
 			if($selection) {
 				//Check ID and Token
 				if(session_id() == $selection['session_id'] && $_SESSION['token'] == $selection['token']) {
@@ -187,12 +190,48 @@ class Auth {
 		$db->logoutUser($_SESSION['user_id']);
 	}
 
-	public function sendVerification($user_id) {
-		;
+	public function sendVerification($email, $code = null) {
+		//if code = null, then retrieve code from db
+		if ($code == null) {
+			$db = new AuthDB();
+			$code = $db->retrieveCode($email);
+			if (!$code) {
+				return false;
+			}
+		}
+		
+		//set email subject
+		$subject = 'Account Creation Verification';
+		
+		//set email body
+		$message = 'This is to verify your new account has a valid email address';
+		$message .= '<br /><br />Your verificatoin code is <b>'. $code .'</b>';
+		$message .= '<br /><br />You can click <a href="http://' . SITE_HTTP . '/verify.php?email=' . $email . '&code=' . urlencode($code) . '">here</a> to verify automatically';
+		$message .= '<br />or visit <a href="http://'. SITE_HTTP . '/verify.php">http://' . SITE_HTTP . '/verify.php</a>';
+		$message .= '<br /><br />Thank you for your coorperation';
+		
+		//set email headers
+		$headers = 'From: ' . FROM_EMAIL . "\r\n" .
+		    'Reply-To: ' . FROM_EMAIL . "\r\n" .
+			'Content-type: text/html; charset=iso-8859-1' . "\r\n" .
+		    'X-Mailer: PHP/' . phpversion();
+		
+
+		//send email
+		if (mail($email, $subject, $message, $headers)) {
+			return true;
+		}
+		
+		return false;
 	}
 
 	public function checkVerification($email, $code) {
-		;
+		$db = new AuthDB();
+		
+		if ($db->checkVerification($email, $code) > 0) {
+			return true;
+		}
+		
+		return false;
 	}
-
 }

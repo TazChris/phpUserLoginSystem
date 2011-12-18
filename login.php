@@ -7,8 +7,6 @@ $auth = new Auth();
 
 if (isset($_POST['username']) && isset($_POST['password'])) {
 	$status = $auth->login($_POST['username'], $_POST['password']);
-
-	echo $status;
 	
 	if ($status == 0) {
 		header('Location: loggedIn.php');
@@ -42,7 +40,11 @@ else {
 <?php if (isset($error)) {
 	echo 'There was an issue logging in. Error: ' . $error . '<br />';
 }
+else if (isset($_GET['verified'])) {
+	echo 'Your account is verified, please login below <br />';
+}
 ?>
+
 Username/Email: <input type="text" name="username" />
 <br />Password: <input type="password" name="password" />
 <br /><input type="submit" value="Login" />

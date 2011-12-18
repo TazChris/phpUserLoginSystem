@@ -10,7 +10,7 @@ $auth = new Auth();
 
 if (isset($_POST['email']) && isset($_POST['pw1'])) {
 	if ($auth->createUser($_POST['email'], $_POST['pw1'])) {
-		echo 'Account Created';
+		echo 'Account Created, please check your email for verification information';
 	}
 }
 
