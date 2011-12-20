@@ -48,6 +48,7 @@ else if (isset($_GET['verified'])) {
 Username/Email: <input type="text" name="username" />
 <br />Password: <input type="password" name="password" />
 <br /><input type="submit" value="Login" />
+<a href="forgot_password.php">Forgot Password</a>
 </form>
 </body>
 </html>	

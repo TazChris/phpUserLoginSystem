@@ -159,4 +159,32 @@ class AuthDB {
 		
 		return false;
 	}
+	
+	public function newPassword($email, $password, $salt) {
+		$query = "UPDATE " . USER_TABLE . " SET password = ?, user_salt = ? WHERE email = ?";
+		
+		$stmt = $this->_db->prepare($query);
+		
+		$stmt->bind_param("sss", $password, $salt, $email);
+		
+		if ($stmt->execute()) {
+			return $stmt->affected_rows;
+		}
+		
+		return -1;
+	}
+	
+	public function updatePassword($userId, $password, $salt) {
+		$query = "UPDATE " . USER_TABLE . " SET password = ?, user_salt = ? WHERE pkUserId = ?";
+	
+		$stmt = $this->_db->prepare($query);
+	
+		$stmt->bind_param("ssi", $password, $salt, $userId);
+	
+		if ($stmt->execute()) {
+			return $stmt->affected_rows;
+		}
+	
+		return -1;
+	}
 }

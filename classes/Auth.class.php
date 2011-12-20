@@ -100,6 +100,7 @@ class Auth {
 					}
 					$_SESSION['token'] = $token;
 					$_SESSION['user_id'] = $selection[0]['pkUserId'];
+					$_SESSION['email'] = $email;
 
 					//Delete old logged_in_member records for user
 					$this->_db->removePriorLogins($selection[0]['pkUserId']);
@@ -230,6 +231,90 @@ class Auth {
 		
 		if ($db->checkVerification($email, $code) > 0) {
 			return true;
+		}
+		
+		return false;
+	}
+	
+	public function forgotPassword($email) {
+		$this->_db = new AuthDB();
+		
+		//Generate users salt
+		$user_salt = $this->randomString();
+			
+		//Salt and Hash the password
+		$password2 = $this->randomString(8); 
+		$password = $user_salt . $password2;
+		$password = $this->hashData($password);
+			
+		//Commit values to database here.
+		$created = $this->_db->newPassword($email, $password, $user_salt);
+		
+		$this->_db = null;
+		
+		if($created > 0) {
+			//send new pw via email
+			$this->sendNewPassword($email, $password2);
+			return true;
+		}
+			
+		return false;
+	} 
+	
+	private function sendNewPassword($email, $password) {
+		//set email subject
+		$subject = 'Password Change';
+		
+		//set email body
+		$message = 'Please find your new password below. Once logged in, please change your password';
+		$message .= '<br /><br />Your new password is <b>'. $password .'</b>';
+		$message .= '<br /><br />Thank you for your coorperation';
+		
+		//set email headers
+		$headers = 'From: ' . FROM_EMAIL . "\r\n" .
+				    'Reply-To: ' . FROM_EMAIL . "\r\n" .
+					'Content-type: text/html; charset=iso-8859-1' . "\r\n" .
+				    'X-Mailer: PHP/' . phpversion();
+		
+		
+		//send email
+		if (mail($email, $subject, $message, $headers)) {
+			return true;
+		}
+		
+		return false;
+	}
+	
+	public function changePassword($userId, $email, $currentPassword, $newPassword) {
+		$this->_db = new AuthDB();
+
+		//Select users row from database base on $email
+		$selection = $this->_db->getUserInfo($email);
+
+		//Salt and hash password for checking
+		$currentPassword = $selection[0]['user_salt'] . $currentPassword;
+		$currentPassword = $this->hashData($currentPassword);
+
+		//Check email and password hash match database row
+		if ($currentPassword == $selection[0]['password']) $match = true;
+		else $match = false;
+
+		//Convert to boolean
+		$is_active = (boolean) $selection[0]['is_active'];
+		$verified = (boolean) $selection[0]['is_verified'];
+
+		if($match == true) {
+			if($is_active == true) {
+				if($verified == true) {
+					$salt = $this->randomString();
+					$newPassword = $salt . $newPassword;
+					$newPassword = $this->hashData($newPassword);
+					$cp = $this->_db->updatePassword($_SESSION['user_id'], $newPassword, $salt);
+					if ($cp > 0) {
+						return true;
+					}
+				} 
+			}
 		}
 		
 		return false;
