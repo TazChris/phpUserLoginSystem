@@ -130,22 +130,16 @@ class Auth {
 		return 4;
 	}
 
-	public function checkSession()
-	{
+	public function checkSession() {
 		if (isset($_SESSION['user_id'])) {
 			//session available, continue
 			//get db routines
-			$db = new AuthDB();
+			$this->_db = new AuthDB();
 
 			//Select the row
-			$selection = $db->checkSession($_SESSION['user_id']);
+			$selection = $this->_db->checkSession($_SESSION['user_id']);
 
-			//close db
-			$db = null;
-			unset($db);
-				
 			if($selection) {
-				//Check ID and Token
 				if(session_id() == $selection['session_id'] && $_SESSION['token'] == $selection['token']) {
 					//Id and token match, refresh the session for the next request
 					$this->refreshSession();
@@ -154,7 +148,6 @@ class Auth {
 				//TODO: Possibly remove session since exists ?
 			}
 		}
-
 		return false;
 	}
 
@@ -173,7 +166,7 @@ class Auth {
 
 		//Store in session
 		$_SESSION['token'] = $token;
-
+		
 		if ($db->updateSession($_SESSION['user_id'], session_id(), $token)) {
 			return true;
 		}
@@ -200,91 +193,91 @@ class Auth {
 				return false;
 			}
 		}
-		
+
 		//set email subject
 		$subject = 'Account Creation Verification';
-		
+
 		//set email body
 		$message = 'This is to verify your new account has a valid email address';
 		$message .= '<br /><br />Your verificatoin code is <b>'. $code .'</b>';
 		$message .= '<br /><br />You can click <a href="http://' . SITE_HTTP . '/verify.php?email=' . $email . '&code=' . urlencode($code) . '">here</a> to verify automatically';
 		$message .= '<br />or visit <a href="http://'. SITE_HTTP . '/verify.php">http://' . SITE_HTTP . '/verify.php</a>';
 		$message .= '<br /><br />Thank you for your coorperation';
-		
+
 		//set email headers
 		$headers = 'From: ' . FROM_EMAIL . "\r\n" .
 		    'Reply-To: ' . FROM_EMAIL . "\r\n" .
 			'Content-type: text/html; charset=iso-8859-1' . "\r\n" .
 		    'X-Mailer: PHP/' . phpversion();
-		
+
 
 		//send email
 		if (mail($email, $subject, $message, $headers)) {
 			return true;
 		}
-		
+
 		return false;
 	}
 
 	public function checkVerification($email, $code) {
 		$db = new AuthDB();
-		
+
 		if ($db->checkVerification($email, $code) > 0) {
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	public function forgotPassword($email) {
 		$this->_db = new AuthDB();
-		
+
 		//Generate users salt
 		$user_salt = $this->randomString();
-			
+
 		//Salt and Hash the password
-		$password2 = $this->randomString(8); 
+		$password2 = $this->randomString(8);
 		$password = $user_salt . $password2;
 		$password = $this->hashData($password);
-			
+
 		//Commit values to database here.
 		$created = $this->_db->newPassword($email, $password, $user_salt);
-		
+
 		$this->_db = null;
-		
+
 		if($created > 0) {
 			//send new pw via email
 			$this->sendNewPassword($email, $password2);
 			return true;
 		}
-			
+
 		return false;
-	} 
-	
+	}
+
 	private function sendNewPassword($email, $password) {
 		//set email subject
 		$subject = 'Password Change';
-		
+
 		//set email body
 		$message = 'Please find your new password below. Once logged in, please change your password';
 		$message .= '<br /><br />Your new password is <b>'. $password .'</b>';
 		$message .= '<br /><br />Thank you for your coorperation';
-		
+
 		//set email headers
 		$headers = 'From: ' . FROM_EMAIL . "\r\n" .
 				    'Reply-To: ' . FROM_EMAIL . "\r\n" .
 					'Content-type: text/html; charset=iso-8859-1' . "\r\n" .
 				    'X-Mailer: PHP/' . phpversion();
-		
-		
+
+
 		//send email
 		if (mail($email, $subject, $message, $headers)) {
 			return true;
 		}
-		
+
 		return false;
 	}
-	
+
 	public function changePassword($userId, $email, $currentPassword, $newPassword) {
 		$this->_db = new AuthDB();
 
@@ -313,10 +306,10 @@ class Auth {
 					if ($cp > 0) {
 						return true;
 					}
-				} 
+				}
 			}
 		}
-		
+
 		return false;
 	}
 }
